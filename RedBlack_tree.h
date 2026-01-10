@@ -65,6 +65,50 @@ class RB_tree {
         cout<<"====================\n";
     }
 
+    void left_rotate(RBnode* x) {
+        RBnode* y = x->Rchild;
+        RBnode* T2 = y->Lchild;
+
+        // rotate
+        x->Rchild = T2;
+        if (T2 != NIL) {
+            T2->parent = x;
+        }
+        if (x->parent == nullptr) {
+            root = y;
+        }
+        else if (x == x->parent->Lchild) {  // x在左
+            x->parent->Lchild = y;
+        }
+        else {
+            x->parent->Rchild = y;
+        }
+        y->Lchild = x;
+        x->parent = y;
+    }
+
+    void right_rotate(RBnode* x) {
+        RBnode* y = x->Lchild;
+        RBnode* T2 = y->Rchild;
+
+        // rotate
+        x->Lchild = T2;
+        if (T2 != NIL) {
+            T2->parent = x;
+        }
+        if (x->parent == nullptr) {
+            root = y;
+        }
+        else if (x == x->parent->Lchild) {  // x在左
+            x->parent->Lchild = y;
+        }
+        else {
+            x->parent->Rchild = y;
+        }
+        y->Rchild = x;
+        x->parent = y;
+    }
+
     void insert(RBnode* cur, int v) {
         RBnode* insertNode = new RBnode(v, RED);
         insertNode->Lchild = NIL;
