@@ -30,34 +30,33 @@ class RB_tree {
                         const string& prf_Rchild,  // 往右子樹要加的前綴
                         const string& prf_Lchild,   // 往左子樹要加的前綴
                         string buffer) {          // 當前的 prefix
-            if(Node->Rchild) {
-                pri_printTree(Node->Rchild, "   ", "|  ", buffer+prf_Rchild);
-            }
-            pri_printNode(Node, buffer);
-            if(Node->Lchild) {
-                pri_printTree(Node->Lchild, "|  ", "   ", buffer+prf_Lchild);
-            }
+        if(Node->Rchild) {
+            pri_printTree(Node->Rchild, "   ", "|  ", buffer+prf_Rchild);
         }
-
+        pri_printNode(Node, buffer);
+        if(Node->Lchild) {
+            pri_printTree(Node->Lchild, "|  ", "   ", buffer+prf_Lchild);
+        }
+    }
     void pri_printNode(RBnode* node, const string &buffer) {
-            if (node->color == RED) {
-                cout << buffer << "+-" << "\033[31m" << node->value << "\033[0m" << "\n";
-            }
-            else {
-                if (node->value == nil)
-                    cout << buffer << "+-" << "NIL" << "\n";
-                else
-                    cout << buffer << "+-" << node->value << "\n";
-            }
+        if (node->color == RED) {
+            cout << buffer << "+-" << "\033[31m" << node->value << "\033[0m" << "\n";
         }
+        else {
+            if (node->value == nil)
+                cout << buffer << "+-" << "NIL" << "\n";
+            else
+                cout << buffer << "+-" << node->value << "\n";
+        }
+    }
 
     public:
     RBnode* root;
     RBnode* NIL;
     RB_tree() {
         NIL = new RBnode(nil, BLACK);
-        NIL->Lchild = NIL;
-        NIL->Rchild = NIL;
+        NIL->Lchild = nullptr;
+        NIL->Rchild = nullptr;
         NIL->parent = nullptr;
         root = NIL;
     }
@@ -78,6 +77,7 @@ class RB_tree {
             T2->parent = x;
         }
         if (x->parent == nullptr) {
+            y->parent = nullptr;
             root = y;
         }
         else if (x == x->parent->Lchild) {  // x在左
@@ -101,6 +101,7 @@ class RB_tree {
             T2->parent = x;
         }
         if (x->parent == nullptr) {
+            y->parent = nullptr;
             root = y;
         }
         else if (x == x->parent->Lchild) {  // x在左
@@ -133,7 +134,6 @@ class RB_tree {
                 gp->color = RED;
                 gp->Lchild->color = BLACK;
                 gp->Rchild->color = BLACK;
-                cout << "fuck\n";
                 insert_fixup(gp);
             }
             else if (cur == cur->parent->Lchild) {   // cur is at left
@@ -218,4 +218,159 @@ class RB_tree {
 
         insert_fixup(insertNode);
     }
+
+    void transplant(RBnode* u, RBnode* v) { // 要刪掉u之前，要找接班人v
+        if (u->parent == nullptr) { // u is root
+            // 新的root變v
+            root = v;
+        }
+        else if (u == u->parent->Lchild) {
+            u->parent->Lchild = v;
+        }
+        else if (u == u->parent->Rchild) {
+            u->parent->Rchild = v;
+        }
+        v->parent = u->parent;
+    }
+
+    RBnode* find(int val) {
+        RBnode* cur = root;
+        while (cur != NIL) {
+            if (val > cur->value) {
+                cur = cur->Rchild;
+            }
+            else if (val < cur->value){
+                cur = cur->Lchild;
+            }
+            else {
+                return cur;
+            }
+        }
+        cout << "node "<<val<<" is not exist.\n";
+        return cur;
+    }
+
+    void deleteNode(int val) {
+        RBnode* z = find(val);
+        if (z == NIL) return;
+
+        RBnode* x;
+
+        bool original_color = RED;
+        // case 1: left is NIL
+        if (z->Lchild == NIL) {
+            original_color = z->color;
+            x = z->Rchild;
+            transplant(z, x);
+        }
+        // case 2: right is NIL
+        else if (z->Rchild == NIL) {
+            original_color = z->color;
+            x = z->Lchild;
+            transplant(z, x);
+        }
+        // case 3: neither child is NIL
+        else {
+            // find min node in z's right subtree
+            RBnode* y = z->Rchild;
+            while (y->Lchild != NIL)
+                y = y->Lchild;
+            original_color = y->color;
+            x = y->Rchild;
+            if (x == NIL)
+                x->parent = y;
+            if (y->parent != z) {
+                // 如果 y 在更下面，要先處理 y 移走後其右小孩的遞補
+                transplant(y, x);
+                y->Rchild = z->Rchild;
+                y->Rchild->parent = y;
+            }
+
+            // 用 y 取代 z 的位置
+            transplant(z, y);
+            y->Lchild = z->Lchild;
+            y->Lchild->parent = y;
+            y->color = z->color;
+        }
+        if (original_color == BLACK) {
+            delete_fixup(x);
+        }
+    }
+
+    void delete_fixup(RBnode* x) {
+        RBnode* w = NIL;
+        while (x != root && x->color == BLACK) {
+            // w is x's siblings
+            if (x == x->parent->Lchild) {   // x is left child, w is right
+                w = x->parent->Rchild;
+                // case 1: w is red
+                if (w->color == RED) {
+                    cout<<"case 1\n";
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    left_rotate(x->parent);
+                    w = x->parent->Rchild;
+                }   // case 1 end => enter case 2 or 3 or 4 (must change siblings to BLACK)
+                //case 2
+                if (w->Lchild->color == BLACK && w->Rchild->color == BLACK) {
+                    cout<<"case 2\n";
+                    w->color = RED;
+                    x = x->parent;
+                }
+                else {
+                    // case 3
+                    if (w->Rchild->color == BLACK) {
+                        cout<<"case 3\n";
+                        w->Lchild->color = BLACK;
+                        w->color = RED;
+                        right_rotate(w);
+                        w = x->parent->Rchild;
+                    }
+                    // case 4: case 3 結束必做 case 4
+                    cout<<"case 4\n";
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->Rchild->color = BLACK;
+                    left_rotate(x->parent);
+                    x = root;
+                }
+            }
+            else {  // x is right child, w is left
+                w = x->parent->Lchild;
+                // case 1: w is red
+                if (w->color == RED) {
+                    cout<<"case 1\n";
+                    w->color = BLACK;
+                    x->parent->color = RED;
+                    right_rotate(x->parent);
+                    w = x->parent->Lchild;
+                }   // case 1 end => enter case 2 or 3 or 4 (must change siblings to BLACK)
+                //case 2
+                if (w->Lchild->color == BLACK && w->Rchild->color == BLACK) {
+                    cout<<"case 2\n";
+                    w->color = RED;
+                    x = x->parent;
+                }
+                else {
+                    // case 3
+                    if (w->Lchild->color == BLACK) {
+                        cout<<"case 3\n";
+                        w->Rchild->color = BLACK;
+                        w->color = RED;
+                        left_rotate(w);
+                        w = x->parent->Lchild;
+                    }
+                    // case 4: case 3 結束必做 case 4
+                    cout<<"case 4\n";
+                    w->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    w->Lchild->color = BLACK;
+                    right_rotate(x->parent);
+                    x = root;
+                }
+            }
+        }
+        x->color = BLACK;
+    }
+
 };
