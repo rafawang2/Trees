@@ -11,14 +11,14 @@ int main() {
         }
         BT.insert(n);
         cout << "Result:\n";
-        BT.printTree(BT.root);
+        BT.printTree(BT.root, 0);
     }
-    // while (cin>>n) {
-    //     if (n==-1) {
-    //         break;
-    //     }
-    //     RBT.deleteNode(n);
-    //     cout << "Result:\n";
-    //     RBT.printTree();
-    // }
+    while (cin>>n) {
+        if (n==-1) {
+            break;
+        }
+        BT.remove(n);
+        cout << "Result:\n";
+        BT.printTree(BT.root, 0);
+    }
 }
