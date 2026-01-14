@@ -89,7 +89,7 @@ class AVL {
                 return cur;
             }
         }
-        cout << "node "<<val<<" is not exist.\n";
+        cout << "node "<<val<<" does not exist.\n";
         return cur;
     }
 
