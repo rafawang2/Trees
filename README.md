@@ -5,7 +5,7 @@
 - 刪除節點（Delete）
 - 自動平衡（LL、LR、RR、RL 旋轉）
 - 計算 Height 與 Balance Factor
-- 樹狀結構可視化列印
+- 樹狀結構圖形化列印
 
 ### 編譯方式
 `cd ./AVLtree`
@@ -329,21 +329,168 @@ void remove(int val);
 4. parent 移除 key 與 child 指標
 
 5. delete right child
-
-### 主程式流程
-```
-while (cin >> n) { insert... }
-while (cin >> n) { remove... }
-```
-
-你可以自由輸入測資，觀察：
-
-split
-
-borrow
-
-merge
-
-tree height 變化
 # Huffman
 # RedBlackTree
+本專案使用 C++ 實作 Red-Black Tree（紅黑樹），支援：
+
+- 插入（Insert）
+
+- 刪除（Delete）
+
+- 旋轉（Left / Right Rotate）
+
+- 插入修正（Insert Fixup）
+
+- 刪除修正（Delete Fixup）
+
+- NIL 節點設計
+
+- 樹狀結構圖像化（紅色節點顯示為紅色）
+
+### 編譯方式
+`cd ./ RedBlackTree`
+
+`g++ main.cpp RedBlack_tree.cpp -o main`
+
+## 使用方式
+
+程式分成兩個階段：
+
+- 插入節點
+
+- 刪除節點
+
+每個階段輸入整數，直到輸入 -1 結束該階段。
+
+範例輸入：
+
+`50 10 80 90 70 60 65 62 -1`
+
+`50 10 80 90 70 60 65 62 -1`
+
+
+第一行：插入，第二行：刪除
+
+每次操作後都會顯示目前紅黑樹結構。
+
+## 輸出格式說明
+
+黑色節點：正常顯示
+
+紅色節點：以 ANSI 紅色顯示
+
+NIL 節點：顯示為 NIL
+
+格式範例：
+```
+      +-NIL
+   +-80
+   |  +-NIL
++-10
+```
+
+紅色節點會顯示成紅色字體，方便除錯與理解結構。
+
+## 核心設計
+### 1. 節點結構
+```
+struct RBnode {
+    int value;
+    bool color;   // RED / BLACK
+    RBnode* parent;
+    RBnode* Lchild;
+    RBnode* Rchild;
+};
+```
+### 2. NIL 節點設計
+```
+RBnode* NIL;
+```
+
+所有 leaf 的 child 都指向 NIL
+
+NIL 一律是 BLACK
+
+## 功能說明
+### Insert
+```
+void insert(RBnode* cur, int v);
+```
+
+流程：
+
+1. 先用 BST 規則插入
+
+2. 新節點顏色設為 RED
+
+3. 呼叫 insert_fixup() 修正紅黑性質
+
+### Insert Fixup
+```
+void insert_fixup(RBnode* cur);
+```
+
+處理四大情況：
+
+**Case 說明**
+- case 1 父與叔皆為 RED → 變色
+- case 2 自己 & 父皆為 RED
+    - LL	右旋
+    - LR	左旋 + 右旋
+    - RL	右旋 + 左旋
+    - RR	左旋
+
+### Rotate
+```
+void left_rotate(RBnode* x);
+void right_rotate(RBnode* x);
+```
+
+同時處理：
+```
+parent 指標
+root 更新
+NIL 節點
+```
+
+### Search
+```
+RBnode* find(int val);
+```
+標準 BST 搜尋流程。
+
+### Delete
+```
+void deleteNode(int val);
+```
+
+流程：
+
+1. 找到節點 z
+
+2. 分三種情況：
+
+    - 左子為 NIL
+    - 右子為 NIL
+    - 兩邊都有 → 找 successor
+3. 使用 transplant()
+
+4. 若刪到 BLACK 節點 → 呼叫 delete_fixup()
+
+### Delete Fixup
+```
+void delete_fixup(RBnode* x);
+```
+| Case | 說明 |
+| :---: | :--- |
+|Case 1 |兄弟為 RED|
+|Case 2 |兄弟 BLACK + 兩子 BLACK|
+|Case 3 |兄弟 BLACK + 近子 RED|
+|Case 4 |兄弟 BLACK + 遠子 RED|
+
+### Transplant
+```
+void transplant(RBnode* u, RBnode* v);
+```
+
+用途：刪除節點時，用**v接替u**的位置
