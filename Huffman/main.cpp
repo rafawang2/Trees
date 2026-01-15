@@ -13,10 +13,5 @@ int main () {
     HuffmanTree HT(datas);
     HT.BuildTree();
     HT.printTree();
-    for (Huffnode* n: HT.BFS()) {
-        if (n->word != '\0') {
-            cout<<n->word<<": "<<n->code<<endl;
-            HT.decode(n->code);
-        }
-    }
+    HT.decode("111110101110101000100"); // output: edbacgf
 }

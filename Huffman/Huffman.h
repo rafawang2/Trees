@@ -2,7 +2,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <algorithm>
 #include <queue>
 using std::cin;
 using std::cout;
@@ -10,7 +9,6 @@ using std::endl;
 using std::vector;
 using std::string;
 using std::pair;
-using std::sort;
 using std::queue;
 
 struct Huffnode {
@@ -21,6 +19,46 @@ struct Huffnode {
     string code;
     Huffnode(char w, int f): word(w), freq(f), Lchild(nullptr), Rchild(nullptr), code("") {}
 };
+
+void heapify(vector<Huffnode*>& nodes, int parent) { // min-heap
+    int Lchild = parent*2 + 1;
+    int Rchild = parent*2 + 2;
+    int min_idx = parent;
+    if (Lchild < nodes.size() && nodes[Lchild]->freq < nodes[min_idx]->freq) {
+        min_idx = Lchild;
+    }
+    if (Rchild < nodes.size() && nodes[Rchild]->freq < nodes[min_idx]->freq) {
+        min_idx = Rchild;
+    }
+
+    if (min_idx != parent) {
+        std::swap(nodes[parent], nodes[min_idx]);
+        heapify(nodes, min_idx);
+    }
+}
+
+void heapify_up(vector<Huffnode*>& nodes, int idx) {
+    if (idx == 0) return;
+    int parent = idx/2;
+    if (nodes[parent]->freq > nodes[idx]->freq) {
+        std::swap(nodes[parent], nodes[idx]);
+        heapify_up(nodes, parent);
+    }
+}
+
+void build_heap(vector<Huffnode*>& nodes) {
+    int n = nodes.size();
+    for (int parent = (n-1)/2; parent>=0; --parent) {
+        heapify(nodes, parent);
+    }
+}
+Huffnode* ExtractMinNode(vector<Huffnode*>& nodes) {
+    Huffnode* minNode = nodes[0];
+    nodes[0] = nodes.back();
+    nodes.pop_back();
+    heapify(nodes, 0);
+    return minNode;
+}
 
 class HuffmanTree {
     private:
@@ -38,7 +76,12 @@ class HuffmanTree {
     }
 
     void pri_printNode(Huffnode* node, const string &buffer) {
-        cout << buffer << "+-(" <<node->word<<", "<< node->freq << ")\n";
+        if (node->word == '\0') {
+            cout << buffer << "+-(" << node->freq << ")\n";
+        }
+        else {
+            cout << buffer << "\033[31m+-(" <<node->word<<", "<< node->freq<<", "<<node->code << ")\033[0m\n";
+        }
     }
 
     public:
@@ -56,26 +99,18 @@ class HuffmanTree {
         for (auto& d : datas) {
             Nodes.push_back(new Huffnode(d.first, d.second));
         }
-        sort(Nodes.begin(), Nodes.end(), comp);
+        build_heap(Nodes);
     }
 
-    static bool comp(Huffnode* a, Huffnode* b) {    // freq由大到小排好
-        return a->freq > b->freq;
-    }
-    Huffnode* chooseMin() {
-        Huffnode* minNode = Nodes.back();
-        Nodes.pop_back();
-        return minNode;
-    }
     void BuildTree() {
         while (Nodes.size()>1) {
-            Huffnode* node1 = chooseMin();
-            Huffnode* node2 = chooseMin();
+            Huffnode* node1 = ExtractMinNode(Nodes);
+            Huffnode* node2 = ExtractMinNode(Nodes);
             Huffnode* parent = new Huffnode('\0', node1->freq+node2->freq);
             parent->Lchild = node1;
             parent->Rchild = node2;
             Nodes.push_back(parent);
-            sort(Nodes.begin(), Nodes.end(), comp);
+            heapify_up(Nodes, Nodes.size()-1);
         }
         root = Nodes.front();   // 剩下最後的當root
         encode(root, "");
@@ -84,28 +119,31 @@ class HuffmanTree {
     void encode(Huffnode* cur, string code) {
         if (cur == nullptr)
             return;
-        if (cur->Rchild)
-            encode(cur->Rchild, code + "1");
-        cur->code = code;
-        if (cur->Lchild)
-            encode(cur->Lchild, code + "0");
+        if (cur->Lchild == nullptr && cur->Rchild == nullptr) { // encode at leaf node
+            cur->code = code;
+        }
+        encode(cur->Lchild, code + "0");
+        encode(cur->Rchild, code + "1");
     }
 
-    void decode(const string& code) {
+    void decode(const string& bits) {   // 解一整串密文
         Huffnode* cur = root;
-        for (const char& c : code) {
-            if (c == '0' && cur->Lchild) {
+        for (const char& c : bits) {
+            if (cur->Lchild && c == '0') {
                 cur = cur->Lchild;
             }
-            else if (c == '1' && cur->Rchild) {
+            else if (cur->Rchild && c == '1') {
                 cur = cur->Rchild;
             }
             else {
-                cout << "Wrong code format\n";
-                return;
+                cout << "decode failed.\n";
+            }
+            if (cur->Lchild == nullptr && cur->Rchild == nullptr) {
+                cout << cur->word;
+                cur = root;
             }
         }
-        cout << code <<" -> " <<cur->word<<endl;
+        cout << endl;
     }
 
     vector<Huffnode*> BFS() {
