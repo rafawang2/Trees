@@ -7,10 +7,15 @@
 - 計算 Height 與 Balance Factor
 - 樹狀結構圖形化列印
 
-### 編譯方式
-`cd ./AVLtree`
+---
 
-`g++ main.cpp -o main`
+### 編譯方式
+```cmd
+cd ./AVLtree
+g++ main.cpp -o main
+```
+
+---
 
 ## 使用方式
 程式分成兩個階段：
@@ -51,9 +56,11 @@ BF = 0（平衡）
 
 樹狀結構以「旋轉 90 度」方式呈現，右子樹在上，左子樹在下。
 
+---
+
 ## 功能說明
 ### 1. 節點結構
-```
+```cpp
 struct AVLnode {
     int value;
     int height;   // 從此節點到最深葉節點的距離
@@ -63,57 +70,67 @@ struct AVLnode {
 };
 ```
 
+---
+
 ### 2. 插入（Insert）
-```
+```cpp
 AVLnode* insert(AVLnode* cur, int val);
 ```
 
 流程：
 
-依 BST 規則插入
+1. 依 BST 規則插入
 
-更新 Height 與 BF
+2. 更新 Height 與 BF
 
-判斷是否失衡
+3. 判斷是否失衡
 
-進行以下旋轉之一：
+4. 進行以下旋轉之一：
 
-LL, LR, RR, RL
+    LL, LR, RR, RL
+
+---
 
 ### 3. 刪除（Delete）
-```
+```cpp
 AVLnode* deleteNode(AVLnode* cur, int val);
 ```
 
 支援三種情況：
 
-Leaf（無子）
+1. Leaf（無子）
 
-單子樹
+2. 單子樹
 
-雙子樹（使用右子樹最小值取代）
+3. 雙子樹（使用右子樹最小值取代）
 
 刪除後一樣會：
 
-更新 Height / BF
+- 更新 Height / BF
 
-進行必要旋轉以維持平衡
+- 進行必要旋轉以維持平衡
+
+---
 
 ### 4. 旋轉操作
 
 左旋（Left Rotate）
-```
+```cpp
 AVLnode* LeftRotate(AVLnode* node);
 ```
 右旋（Right Rotate）
-```
+```cpp
 AVLnode* RightRotate(AVLnode* node);
 ```
+
+---
+
 ### 5. 搜尋
-```
+```cpp
 AVLnode* search(int val);
 ```
 使用 iterative 方式從 root 開始搜尋。
+
 # Btree
 本專案使用 C++ 實作 B-Tree，支援：
 - 插入（Insert）
@@ -130,10 +147,15 @@ AVLnode* search(int val);
 
 - 樹結構列印（依層級輸出）
 
-### 編譯方式
-`cd ./Btree`
+---
 
-`g++ main.cpp -o main`
+### 編譯方式
+```cmd
+cd ./Btree
+g++ main.cpp -o main
+```
+
+---
 
 ## 使用方式
 
@@ -157,6 +179,8 @@ AVLnode* search(int val);
 
 每次操作後都會印出整棵 B-Tree 的結構。
 
+---
+
 ## 輸出格式說明
 
 每個節點會顯示為：
@@ -175,6 +199,8 @@ root 為 level 0
 每往下一層 level +1
 
 一個節點中可能有多個 key
+
+---
 
 ## 核心設計
 ### 1. 節點結構
@@ -330,6 +356,141 @@ void remove(int val);
 
 5. delete right child
 # Huffman
+Huffman Tree with Custom Min-Heap (C++)
+
+本專案為一個 **Huffman Tree Encode System**，包含：
+- 自製 **Min-Heap** (Min-Priority queue)
+- Huffman Tree
+- encode
+- decode
+- BFS Traversal
+- 樹狀輸出
+---
+## 功能
+- 依照 Huffman 演算法規則建樹
+- 為每個字元產生對應 Huffman Code
+- 支援 **一整串 bit string解碼**
+- 提供 **樹狀列印**
+- BFS 走訪節點
+
+---
+## 資料結構設計
+### Huffnode
+```cpp
+struct Huffnode {
+    Huffnode* Lchild;
+    Huffnode* Rchild;
+    char word;
+    int freq;
+    string code;
+};
+```
+- `word`：字元
+
+- `freq`：出現頻率
+
+- `code`：Huffman 編碼
+
+- `Lchild`, `Rchild`：左右子樹指標
+
+### Min-Heap 實作
+
+- `heapify`
+
+- `heapify_up`
+
+- `build_heap`
+
+- `ExtractMinNode`
+
+確保每次都能以 **O(log n)** 取出最小頻率節點，符合 Huffman 演算法需求。
+
+## Huffman Tree 建構流程
+
+將所有 (char, freq) 建立成 leaf nodes
+
+建立 Min-Heap
+
+重複：
+
+1. 取出兩個最小 freq 節點
+
+2. 合併成 parent node
+
+3. push 回 heap 並做 heapify_up
+
+4. 直到只剩一個節點作為 root
+
+5. 產生編碼
+
+## encode
+
+左子樹：0
+
+右子樹：1
+
+只在葉節點儲存 code
+
+```cpp
+void encode(Huffnode* cur, string code) {
+    if (cur == nullptr)
+        return;
+    if (cur->Lchild == nullptr && cur->Rchild == nullptr) {
+        cur->code = code;
+    }
+    encode(cur->Lchild, code + "0");
+    encode(cur->Rchild, code + "1");
+}
+```
+
+## decode
+支援解一整串 bit string，例如：
+```cpp
+HT.decode("111110101110101000100");
+// output: edbacgf
+```
+---
+
+### 編譯方式
+```cmd
+cd ./Huffman
+g++ main.cpp -o main
+```
+---
+
+### 範例輸入/輸出
+```cpp
+vector<pair<char,int>> datas = {
+    {'a', 10},
+    {'b', 50},
+    {'c', 60},
+    {'d', 62},
+    {'e', 65},
+    {'f', 70},
+    {'g', 80},
+};
+```
+```cpp
+// output
+====================
+         +-(e, 65, 111)
+      +-(127)
+      |  +-(d, 62, 110)
+   +-(247)
+   |  |     +-(b, 50, 1011)
+   |  |  +-(60)
+   |  |  |  +-(a, 10, 1010)
+   |  +-(120)
+   |     +-(c, 60, 100)
++-(397)
+   |  +-(g, 80, 01)
+   +-(150)
+      +-(f, 70, 00)
+====================
+```
+
+---
+
 # RedBlackTree
 本專案使用 C++ 實作 Red-Black Tree（紅黑樹），支援：
 
